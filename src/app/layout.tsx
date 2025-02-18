@@ -8,7 +8,7 @@ import "./globals.css";
 const dmSans = DM_Sans({ subsets: ["latin"] });
 
 export const metadata = {
-    title: "Create Recalla App",
+    title: "Recalla",
     description: "An app that lets users create flashcards to streamline their study process",
 };
 
