@@ -1,7 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { useState, useEffect } from "react";
 import {
   AppBar,
   Toolbar,
@@ -26,113 +25,19 @@ import {
   Badge,
   Tooltip,
 } from "@mui/material";
-import { styled } from "@mui/material/styles";
 import ChevronLeftIcon from "@mui/icons-material/ChevronLeft";
-// import ChevronRightIcon from "@mui/icons-material/ChevronRight";
 import UploadFileIcon from "@mui/icons-material/UploadFile";
 import MenuIcon from "@mui/icons-material/Menu";
 import SendIcon from "@mui/icons-material/Send";
 import AutoAwesomeIcon from "@mui/icons-material/AutoAwesome";
 import CloseIcon from "@mui/icons-material/Close";
-
-const drawerWidth = 280;
-
-const Main = styled("main", { shouldForwardProp: (prop) => prop !== "open" })(
-  ({ theme, open }) => ({
-    flexGrow: 1,
-    transition: theme.transitions.create("margin", {
-      easing: theme.transitions.easing.sharp,
-      duration: theme.transitions.duration.leavingScreen,
-    }),
-    marginLeft: 0,
-    ...(open && {
-      marginLeft: drawerWidth,
-      transition: theme.transitions.create("margin", {
-        easing: theme.transitions.easing.easeOut,
-        duration: theme.transitions.duration.enteringScreen,
-      }),
-    }),
-  })
-);
-
-const ChatContainer = styled(Paper)(({ theme }) => ({
-  position: "fixed",
-  bottom: theme.spacing(3),
-  right: theme.spacing(3),
-  width: 350,
-  maxHeight: 500,
-  display: "flex",
-  flexDirection: "column",
-  background: theme.palette.background.paper,
-  borderRadius: theme.shape.borderRadius * 2,
-  boxShadow: "0 8px 32px rgba(0, 0, 0, 0.2)",
-  border: "1px solid rgba(255, 255, 255, 0.1)",
-}));
-
-const ChatMessages = styled(Box)(({ theme }) => ({
-  flex: 1,
-  overflowY: "auto",
-  padding: theme.spacing(2),
-  maxHeight: 350,
-}));
-
-const Message = styled(Box)(({ theme, sent }) => ({
-  margin: theme.spacing(1),
-  padding: theme.spacing(1.5),
-  borderRadius: theme.shape.borderRadius,
-  maxWidth: "80%",
-  wordWrap: "break-word",
-  ...(sent
-    ? {
-        marginLeft: "auto",
-        background: theme.palette.primary.main,
-        color: theme.palette.primary.contrastText,
-      }
-    : {
-        marginRight: "auto",
-        background: theme.palette.background.default,
-      }),
-}));
-
-const StyledBadge = styled(Badge)(({ theme }) => ({
-  "& .MuiBadge-badge": {
-    backgroundColor: "#44b700",
-    color: "#44b700",
-    boxShadow: `0 0 0 2px ${theme.palette.background.paper}`,
-    "&::after": {
-      position: "absolute",
-      top: 0,
-      left: 0,
-      width: "100%",
-      height: "100%",
-      borderRadius: "50%",
-      animation: "ripple 1.2s infinite ease-in-out",
-      border: "1px solid currentColor",
-      content: '""',
-    },
-  },
-  "@keyframes ripple": {
-    "0%": {
-      transform: "scale(.8)",
-      opacity: 1,
-    },
-    "100%": {
-      transform: "scale(2.4)",
-      opacity: 0,
-    },
-  },
-}));
-
-const StudySession = styled(motion.div)(({ theme }) => ({
-  padding: theme.spacing(2),
-  borderRadius: theme.shape.borderRadius,
-  backgroundColor: "rgba(156, 85, 255, 0.1)",
-  marginBottom: theme.spacing(1),
-  cursor: "pointer",
-  "&:hover": {
-    backgroundColor: "rgba(156, 85, 255, 0.2)",
-  },
-}));
+import { supabase } from "@/lib/supabase";
+import ChatWindow from "@/components/Chat/ChatWindow";
+import FlashcardComponent from "@/components/Flashcard/FlashcardComponent";
+import StudySessionList from "@/components/SideBar/StudySessionList";
+import { Main, drawerWidth } from "@/components/Layout/MainContent";
+import { StyledBadge } from "@/components/common/StyledBadge";
+import { uploadFile, updateSessionProgress } from "@/utils/flashcardUtils";
 
 export default function FlashcardsLayout() {
   const [drawerOpen, setDrawerOpen] = useState(true);
@@ -142,7 +47,7 @@ export default function FlashcardsLayout() {
   const [messages, setMessages] = useState([]);
   const [inputMessage, setInputMessage] = useState("");
   const [sessions, setSessions] = useState([]);
-  // const [currentProgress, setCurrentProgress] = useState(0);
+  const [currentProgress, setCurrentProgress] = useState(0);
   const [totalCards, setTotalCards] = useState(0);
   const [completedCards, setCompletedCards] = useState(0);
   // const fileInputRef = useRef(null);
@@ -151,11 +56,18 @@ export default function FlashcardsLayout() {
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    // Load saved sessions from localStorage
-    const savedSessions = JSON.parse(
-      localStorage.getItem("flashcardSessions") || "[]"
-    );
-    setSessions(savedSessions);
+    const fetchSessions = async () => {
+      const { data, error } = await supabase
+        .from("study_sessions")
+        .select("*")
+        .order("created_at", { ascending: false });
+
+      if (!error && data) {
+        setSessions(data);
+      }
+    };
+
+    fetchSessions();
   }, []);
 
   const handleDrawerToggle = () => {
@@ -193,11 +105,28 @@ export default function FlashcardsLayout() {
       const data = await response.json();
       setFlashcards(data);
 
-      const newSession = createNewSession(topic);
-      // setTotalCards(data.length);
-      updateProgress(newSession.id, 0, data.flashcards.length);
+      const createNewSession = async (topic) => {
+        const newSession = {
+          topic,
+          created_at: new Date().toISOString(),
+          progress: 0,
+          total_cards: 0,
+          completed_cards: 0,
+        };
+        return await saveSession(newSession);
+      };
 
-      // Add confirmation message to chat
+      const updateProgress = async (sessionId, completed, total) => {
+        await updateSessionProgress(sessionId, completed, total);
+        const { data } = await supabase
+          .from("study_sessions")
+          .select("*")
+          .order("created_at", { ascending: false });
+        if (data) {
+          setSessions(data);
+        }
+      };
+
       setMessages((prev) => [
         ...prev,
         {
@@ -221,109 +150,127 @@ export default function FlashcardsLayout() {
 
   const handleFileUpload = async (event) => {
     const file = event.target.files[0];
+    if (!file) return;
 
-    if (file) {
-      const formData = new FormData();
-      formData.append("file", file);
+    setIsLoading(true);
+    try {
+      const fileUrl = await uploadFile(file);
+      const response = await fetch("/api/route", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ fileUrl }),
+      });
 
-      setIsLoading(true);
-      try {
-        // First, we need to extract text from PDF
-        // You'll need to implement this API endpoint
-        const textResponse = await fetch("/api/route", {
-          method: "POST",
-          body: formData,
-        });
-
-        // Log the response for debugging
-        console.log("Response status:", textResponse.status);
-        const responseText = await textResponse.text();
-        console.log("Response text:", responseText);
-
-        if (!textResponse.ok) {
-          let errorMessage = "Failed to process PDF";
-          try {
-            const errorData = JSON.parse(responseText);
-            errorMessage = errorData.error || errorMessage;
-          } catch (err) {
-            errorMessage = responseText;
-          }
-          throw new Error(errorMessage);
-        }
-
-        const data = await textResponse.json();
-        setFlashcards(data);
-
-        // Generate flashcards from the extracted text
-        // await generateFlashcards(text);
-
-        // Create a new session
-        const newSession = createNewSession(file.name.replace(".pdf", ""));
-        setTotalCards(data.length);
-        updateProgress(newSession.id, 0, data.length);
-      } catch (err) {
-        setError(err.message);
-        // Add error message to chat
-        setMessages((prev) => [
-          ...prev,
-          {
-            text: "Sorry, I had trouble processing your PDF. Please try again.",
-            sent: false,
-          },
-        ]);
-      } finally {
-        setIsLoading(false);
+      if (!response.ok) {
+        throw new Error("Failed to process file");
       }
+
+      const data = await response.json();
+      setFlashcards(data);
+
+      const newSession = await saveSession({
+        topic: file.name.replace(".pdf", ""),
+        created_at: new Date().toISOString(),
+        progress: 0,
+        total_cards: data.length,
+        completed_cards: 0,
+      });
+
+      setSessions((prev) => [newSession, ...prev]);
+      setTotalCards(data.length);
+    } catch (err) {
+      setError(err.message);
+      setMessages((prev) => [
+        ...prev,
+        {
+          text: `Error: ${err.message}`,
+          sent: false,
+        },
+      ]);
+    } finally {
+      setIsLoading(false);
     }
   };
 
   const handleChatSubmit = async (e) => {
+    if (!e) return;
     e.preventDefault();
     if (inputMessage.trim()) {
-      // Add user message to chat first
       setMessages((prev) => [...prev, { text: inputMessage, sent: true }]);
 
-      // Generate flashcards with the input message
       await generateFlashcards(inputMessage);
-
-      // Clear input after processing
       setInputMessage("");
     }
   };
 
-  const saveSession = (newSession) => {
-    const updatedSessions = [...sessions, newSession];
-    setSessions(updatedSessions);
-    localStorage.setItem("flashcardSessions", JSON.stringify(updatedSessions));
-  };
-
-  const createNewSession = (topic) => {
-    const newSession = {
-      id: Date.now(),
-      topic,
-      createdAt: new Date().toISOString(),
-      progress: 0,
-      totalCards: 0,
-      completedCards: 0,
-    };
-    saveSession(newSession);
-    return newSession;
-  };
-
-  const updateProgress = (sessionId, completed, total) => {
-    const updatedSessions = sessions.map((session) => {
-      if (session.id === sessionId) {
-        return {
-          ...session,
-          progress: (completed / total) * 100,
-          completedCards: completed,
-          totalCards: total,
-        };
-      }
-      return session;
+  const saveSession = async (newSession) => {
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    const { data, error } = await supabase.from("study_sessions").insert({
+      ...newSession,
+      user_id: user.id,
     });
-    setSessions(updatedSessions);
-    localStorage.setItem("flashcardSessions", JSON.stringify(updatedSessions));
+
+    if (error) {
+      console.error("Error saving session:", error);
+      return null;
+    }
+
+    return data;
+  };
+
+  const createStudySession = async (topic, pdfUrl) => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('Not authenticated');
+  
+      const { data, error } = await supabase
+        .from('study_sessions')
+        .insert({
+          user_id: user.id,
+          topic,
+          pdf_url: pdfUrl,
+          progress: 0,
+          total_cards: 0,
+          completed_cards: 0
+        })
+        .select()
+        .single();
+  
+      if (error) throw error;
+      return data;
+    } catch (error) {
+      console.error('Error creating study session:', error);
+      throw error;
+    }
+  };
+
+  const updateStudyProgress = async (sessionId, completedCards) => {
+    try {
+      const { data: session, error: sessionError } = await supabase
+        .from('study_sessions')
+        .select('total_cards')
+        .eq('id', sessionId)
+        .single();
+  
+      if (sessionError) throw sessionError;
+  
+      const progress = Math.round((completedCards / session.total_cards) * 100);
+  
+      const { error } = await supabase
+        .from('study_sessions')
+        .update({
+          progress,
+          completed_cards: completedCards
+        })
+        .eq('id', sessionId);
+  
+      if (error) throw error;
+    } catch (error) {
+      console.error('Error updating study progress:', error);
+      throw error;
+    }
   };
 
   // Update the Main content to display flashcards
@@ -346,49 +293,15 @@ export default function FlashcardsLayout() {
         </Typography>
       )}
 
-      <AnimatePresence>
-        {flashcards.map((card, index) => (
-          <motion.div
-            key={index}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
-          >
-            <Paper
-              sx={{
-                p: 3,
-                mb: 2,
-                cursor: "pointer",
-                transform: isFlipped ? "rotateY(180deg)" : "none",
-                transition: "transform 0.6s",
-                transformStyle: "preserve-3d",
-                position: "relative",
-                background:
-                  "linear-gradient(135deg, rgba(156, 85, 255, 0.1) 0%, rgba(183, 143, 255, 0.1) 100%)",
-              }}
-              onClick={() => setIsFlipped(!isFlipped)}
-            >
-              <Box
-                sx={{
-                  backfaceVisibility: "hidden",
-                  display: isFlipped ? "none" : "block",
-                }}
-              >
-                <Typography variant="h6">{card.front}</Typography>
-              </Box>
-              <Box
-                sx={{
-                  backfaceVisibility: "hidden",
-                  display: isFlipped ? "block" : "none",
-                  transform: "rotateY(180deg)",
-                }}
-              >
-                <Typography variant="body1">{card.back}</Typography>
-              </Box>
-            </Paper>
-          </motion.div>
-        ))}
-      </AnimatePresence>
+      {flashcards.length > 0 && (
+        <Paper sx={{ p: 2, mb: 2 }}>
+          <FlashcardComponent
+            card={flashcards[0]}
+            isFlipped={isFlipped}
+            onFlip={() => setIsFlipped(!isFlipped)}
+          />
+        </Paper>
+      )}
     </Box>
   );
 
@@ -492,50 +405,7 @@ export default function FlashcardsLayout() {
           <Typography variant="subtitle2" color="text.secondary" sx={{ mb: 2 }}>
             Study Sessions
           </Typography>
-
-          <AnimatePresence>
-            {sessions.map((session) => (
-              <StudySession
-                key={session.id}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -20 }}
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-              >
-                <Box
-                  sx={{
-                    display: "flex",
-                    justifyContent: "space-between",
-                    mb: 1,
-                  }}
-                >
-                  <Typography variant="subtitle1">{session.topic}</Typography>
-                  <Typography variant="caption">
-                    {new Date(session.createdAt).toLocaleDateString()}
-                  </Typography>
-                </Box>
-                <Box sx={{ width: "100%", mb: 1 }}>
-                  <LinearProgress
-                    variant="determinate"
-                    value={session.progress}
-                    sx={{
-                      height: 6,
-                      borderRadius: 3,
-                      backgroundColor: "rgba(156, 85, 255, 0.2)",
-                      "& .MuiLinearProgress-bar": {
-                        backgroundColor: "#9C55FF",
-                      },
-                    }}
-                  />
-                </Box>
-                <Typography variant="caption" color="text.secondary">
-                  {session.completedCards} / {session.totalCards} cards
-                  completed
-                </Typography>
-              </StudySession>
-            ))}
-          </AnimatePresence>
+          <StudySessionList sessions={sessions} />
         </Box>
       </Drawer>
 
@@ -562,51 +432,12 @@ export default function FlashcardsLayout() {
         </Box>
       </Main>
 
-      {chatOpen && (
-        <ChatContainer>
-          <Box
-            sx={{
-              p: 2,
-              borderBottom: "1px solid rgba(255, 255, 255, 0.1)",
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
-            }}
-          >
-            <Typography variant="subtitle1">AI Assistant</Typography>
-            <IconButton size="small" onClick={() => setChatOpen(false)}>
-              <CloseIcon />
-            </IconButton>
-          </Box>
-
-          <ChatMessages>
-            {messages.map((message, index) => (
-              <Message key={index} sent={message.sent}>
-                {message.text}
-              </Message>
-            ))}
-          </ChatMessages>
-
-          <Box component="form" onSubmit={handleChatSubmit} sx={{ p: 2 }}>
-            <TextField
-              fullWidth
-              size="small"
-              value={inputMessage}
-              onChange={(e) => setInputMessage(e.target.value)}
-              placeholder="What would you like to learn?"
-              InputProps={{
-                endAdornment: (
-                  <InputAdornment position="end">
-                    <IconButton type="submit" edge="end">
-                      <SendIcon />
-                    </IconButton>
-                  </InputAdornment>
-                ),
-              }}
-            />
-          </Box>
-        </ChatContainer>
-      )}
+      <ChatWindow
+        open={chatOpen}
+        onClose={() => setChatOpen(false)}
+        messages={messages}
+        onSubmit={handleChatSubmit}
+      />
     </Box>
   );
 }

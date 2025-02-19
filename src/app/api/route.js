@@ -10,22 +10,17 @@ const openai = new OpenAI({
 export async function POST(req) {
   try {
     console.log("Starting request processing...");
-    const formData = await req.formData();
-    let topic = "";
+    const { fileUrl } = await req.json();
 
-    // Check if we received a PDF file or text input
-    const pdfFile = formData.get("file");
-    if (pdfFile) {
-      // Handle PDF file
-      const buffer = Buffer.from(await pdfFile.arrayBuffer());
-      const pdfData = await pdf(buffer);
-      topic = pdfData.text;
-      console.log("Extracted text from PDF:", topic);
-    } else {
-      // Handle text input
-      const textData = formData.get("topic");
-      topic = textData || "Machine Learning";
-    }
+    console.log("Downloading file from Supabase:", fileUrl);
+    const receivedFile = await fetch(fileUrl);
+    const arrayBuffer = await receivedFile.arrayBuffer();
+    const buffer = Buffer.from(arrayBuffer);
+
+    console.log("Extracting text from PDF...");
+    const pdfData = await pdf(buffer);
+    const topic = pdfData.text;
+    console.log("Extracted text from PDF:", topic);
 
     const prompt = `You are a flashcard creator, you take in text and create multiple flashcards from it. Make sure to create exactly 10 flashcards.
     Both front and back should be one sentence long. Front one should be a question and back one with answer with a bit explanation and question should be of different difficulty and knowledge depth
