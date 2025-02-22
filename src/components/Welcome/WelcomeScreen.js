@@ -25,7 +25,7 @@ export default function WelcomeScreen({
 }) {
   const [inputMessage, setInputMessage] = useState("");
   const [error, setError] = useState(null);
-  const [isLoading, setIsLoading] = useState(false); // Added local isLoading state
+  const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
 
   const handleFileUpload = async (event) => {
@@ -34,11 +34,25 @@ export default function WelcomeScreen({
 
     setIsLoading(true);
     try {
-      const { flashcards, sessionId } = await uploadAndGenerateFlashcards(file);
+      let {
+        data: { session },
+      } = await supabase.auth.getSession();
+
+      if (!session || Date.now() / 1000 > session.expires_at) {
+        const { data: refreshData, error: refreshError } =
+          await supabase.auth.refreshSession();
+        if (refreshError) throw new Error("Authentication failed");
+        session = refreshData.session;
+      }
+
+      const { flashcards, sessionId } = await uploadAndGenerateFlashcards(
+        file,
+        session.access_token
+      );
       onGenerateFlashcards(flashcards, sessionId);
       router.push(`/flashcards/study?sessionId=${sessionId}`);
     } catch (err) {
-      console.error(err.message);
+      console.error("PDF upload error:", err.message);
       setError(err.message);
     } finally {
       setIsLoading(false);
