@@ -1,0 +1,62 @@
+export const progressPageStyles = {
+  root: {
+    display: "flex",
+    height: "100vh",
+    overflow: "hidden",
+    bgcolor: "linear-gradient(to bottom, #1F1A30, #2A2438, #3A2F50)",
+  },
+  loadingContainer: {
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "center",
+    justifyContent: "center",
+    height: "100vh",
+    bgcolor: "linear-gradient(to bottom, #1F1A30, #2A2438, #3A2F50)",
+  },
+  nav: {
+    width: 256,
+    flexShrink: 0,
+    bgcolor: "rgba(42,36,56,0.9)",
+    borderRight: "1px solid rgba(156,85,255,0.3)",
+    mt: "64px",
+    height: "calc(100vh - 64px)",
+  },
+  main: {
+    flexGrow: 1,
+      mt: "64px",
+      p: 6,
+    overflowY: "auto",
+    "&::-webkit-scrollbar": { width: "8px" },
+    "&::-webkit-scrollbar-thumb": {
+      bgcolor: "#9C55FF",
+      borderRadius: "4px",
+    },
+  },
+  statsCard: {
+    bgcolor: "rgba(66,55,96,0.9)",
+    borderRadius: "12px",
+    p: 6,
+    boxShadow: "lg",
+    border: "1px solid rgba(156,85,255,0.2)",
+    backdropFilter: "blur(8px)",
+  },
+  progressContainer: {
+    mt: 8,
+    p: 4,
+    bgcolor: "rgba(42,36,56,0.9)",
+    borderRadius: 3,
+    border: "1px solid rgba(156,85,255,0.3)",
+    boxShadow: "0 8px 32px rgba(156,85,255,0.15)",
+  },
+  actionButton: {
+    background: "linear-gradient(135deg, #9C55FF 0%, #D4A5FF 100%)",
+    borderRadius: 2,
+    px: 6,
+    py: 2,
+    fontWeight: "bold",
+    boxShadow: "0 4px 12px rgba(156,85,255,0.4)",
+    "&:hover": {
+      background: "linear-gradient(135deg, #8044FF 0%, #B78FFF 100%)",
+    },
+  },
+};
