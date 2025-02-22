@@ -1,6 +1,6 @@
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
-import { supabase } from '@/lib/supabase';
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { supabase } from "@/lib/supabase";
 
 export function useAuth() {
   const [loading, setLoading] = useState(false);
@@ -10,15 +10,15 @@ export function useAuth() {
   const signIn = async (email, password) => {
     setLoading(true);
     setError(null);
-    
+
     try {
       const { error } = await supabase.auth.signInWithPassword({
         email,
-        password
+        password,
       });
 
       if (error) throw error;
-      router.push('/flashcard');
+      router.push("/flashcards");
     } catch (error) {
       setError(error.message);
     } finally {
@@ -29,7 +29,7 @@ export function useAuth() {
   const signUp = async (email, password) => {
     setLoading(true);
     setError(null);
-    
+
     try {
       const { error } = await supabase.auth.signUp({
         email,
@@ -37,7 +37,7 @@ export function useAuth() {
       });
 
       if (error) throw error;
-      setError('Check your email for the confirmation link!');
+      setError("Check your email for the confirmation link!");
     } catch (error) {
       setError(error.message);
     } finally {
