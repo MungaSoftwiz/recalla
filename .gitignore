@@ -34,3 +34,8 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# untracked files
+package-lock.json
+src/app/globals.css
+.env
