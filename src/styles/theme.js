@@ -50,3 +50,60 @@ export const progressStyles = {
     backgroundColor: SHARED_STYLES.colors.primary,
   },
 };
+
+export const rightNavBarStyles = {
+  width: 256,
+  flexShrink: 0,
+  bgcolor: "rgba(42,36,56,0.9)",
+  borderRight: "1px solid rgba(156,85,255,0.3)",
+  mt: "64px",
+  height: "calc(100vh - 64px)",
+  overflowY: "auto",
+  "&::-webkit-scrollbar": {
+    width: "8px",
+    background: "rgba(42,36,56,0.9)",
+  },
+  "&::-webkit-scrollbar-thumb": {
+    background: "linear-gradient(135deg, #9C55FF 0%, #D4A5FF 100%)",
+    borderRadius: "4px",
+    "&:hover": {
+      background: "linear-gradient(135deg, #8044FF 0%, #B78FFF 100%)",
+    },
+  },
+  "&::-webkit-scrollbar-track": {
+    background: "rgba(42,36,56,0.9)",
+    borderRadius: "4px",
+  },
+};
+
+export const mainContentStyles = {
+  root: {
+    display: "flex",
+    height: "100vh",
+    width: "100%",
+    overflow: "hidden",
+    background: "linear-gradient(to bottom, #1F1A30, #2A2438, #3A2F50)",
+  },
+  main: {
+    flexGrow: 1,
+    mt: "64px",
+    p: 0,
+    overflowY: "auto",
+    background: "transparent",
+    "&::-webkit-scrollbar": {
+      width: "8px",
+      background: "rgba(42,36,56,0.9)",
+    },
+    "&::-webkit-scrollbar-thumb": {
+      background: "linear-gradient(135deg, #9C55FF 0%, #D4A5FF 100%)",
+      borderRadius: "4px",
+      "&:hover": {
+        background: "linear-gradient(135deg, #8044FF 0%, #B78FFF 100%)",
+      },
+    },
+    "&::-webkit-scrollbar-track": {
+      background: "rgba(42,36,56,0.9)",
+      borderRadius: "4px",
+    },
+  },
+};
