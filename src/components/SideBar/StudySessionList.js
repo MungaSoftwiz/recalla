@@ -1,8 +1,10 @@
 "use client";
 
 import React, { useEffect, useState, memo } from "react";
+import { Box } from "@mui/material";
 import { motion } from "framer-motion";
 import { supabase } from "@/lib/supabase";
+import { rightNavBarStyles, SHARED_STYLES } from "@/styles/theme";
 
 const SessionCard = memo(({ session, isActive, onSessionSelect }) => {
   const progress =
@@ -15,11 +17,20 @@ const SessionCard = memo(({ session, isActive, onSessionSelect }) => {
       whileHover={{ scale: 1.01 }}
       onClick={() => onSessionSelect?.(session)}
       className={`mb-2 mx-2 p-4 rounded-lg cursor-pointer transition-all ${
-        isActive ? "bg-[#392064]" : "bg-[#2a2438]"
+        isActive ? "bg-[#4A1E6A]" : "bg-[#2a2438]"
       }`}
+      style={{
+        background: isActive
+          ? "rgba(74, 30, 106, 0.9)"
+          : "rgba(42, 36, 56, 0.9)",
+        border: isActive
+          ? `1px solid ${SHARED_STYLES.colors.primary}`
+          : "1px solid rgba(156, 85, 255, 0.3)",
+        color: isActive ? "#FFFFFF" : "#D4C8FF",
+      }}
     >
       <h3 className="text-white font-medium text-sm mb-2">{session.topic}</h3>
-      <div className="flex justify-between items-center text-xs text-gray-400 mb-2">
+      <div className="flex justify-between items-center text-xs mb-2">
         <span>{new Date(session.created_at).toLocaleDateString()}</span>
         <span>
           {session.completed_cards}/{session.total_cards}
@@ -76,7 +87,6 @@ const FlashcardSidebar = ({
 
     fetchSessions();
 
-    // Optional: Real-time subscription
     const subscription = supabase
       .channel("study_sessions")
       .on(
@@ -98,16 +108,44 @@ const FlashcardSidebar = ({
   };
 
   return (
-    <div className="w-64 h-screen bg-[#1a1625] flex flex-col flex-shrink-0">
-      <div className="p-4 border-b border-purple-500/20">
+    <Box
+      sx={{
+        ...rightNavBarStyles,
+        display: "flex",
+        flexDirection: "column",
+      }}
+    >
+      <Box
+        sx={{
+          p: 2,
+          borderBottom: "1px solid rgba(156,85,255,0.3)",
+          flexShrink: 0,
+        }}
+      >
         <h2 className="text-lg font-semibold text-white">Study Sets</h2>
-      </div>
+      </Box>
 
-      <div
-        className="flex-1 overflow-y-auto"
-        style={{
+      <Box
+        sx={{
+          flex: 1,
+          overflowY: "auto",
+          "&::-webkit-scrollbar": {
+            width: "8px",
+            background: "transparent",
+          },
+          "&::-webkit-scrollbar-thumb": {
+            background: SHARED_STYLES.gradients.primary,
+            borderRadius: "4px",
+          },
+          "&::-webkit-scrollbar-thumb:hover": {
+            background: SHARED_STYLES.gradients.primaryHover,
+          },
+          "&::-webkit-scrollbar-track": {
+            background: "rgba(42,36,56,0.5)",
+            borderRadius: "4px",
+          },
           scrollbarWidth: "thin",
-          scrollbarColor: "rgba(156, 85, 255, 0.5) rgba(156, 85, 255, 0.1)",
+          scrollbarColor: "rgba(156,85,255,0.5) rgba(42,36,56,0.5)",
         }}
       >
         {loading ? (
@@ -129,8 +167,8 @@ const FlashcardSidebar = ({
             />
           ))
         )}
-      </div>
-    </div>
+      </Box>
+    </Box>
   );
 };
 
