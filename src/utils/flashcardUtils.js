@@ -20,7 +20,6 @@ export async function uploadFile(file) {
     const {
       data: { publicUrl },
     } = supabase.storage.from("pdfs").getPublicUrl(filePath);
-
     return publicUrl;
   } catch (error) {
     console.error("Error uploading file:", error);
@@ -56,23 +55,6 @@ export async function createStudySession(topic, pdfUrl) {
   }
 }
 
-export async function saveSession(newSession) {
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  const { data, error } = await supabase.from("study_sessions").insert({
-    ...newSession,
-    user_id: user.id,
-  });
-
-  if (error) {
-    console.error("Error saving session:", error);
-    return null;
-  }
-
-  return data;
-}
-
 export async function updateSessionProgress(sessionId, completed, total) {
   const { error } = await supabase
     .from("study_sessions")
@@ -80,9 +62,59 @@ export async function updateSessionProgress(sessionId, completed, total) {
       progress: (completed / total) * 100,
       completed_cards: completed,
       total_cards: total,
+      // time_spent: timeSpent,
+      // study_streak: streak,
       updated_at: new Date().toISOString(),
     })
     .eq("id", sessionId);
 
   if (error) throw new Error(`Failed to update progress: ${error.message}`);
+}
+
+export async function uploadAndGenerateFlashcards(file, sessionId = null) {
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
+  if (!session) throw new Error("Not authenticated");
+  const fileUrl = await uploadFile(file);
+  const newSession = sessionId
+    ? { id: sessionId }
+    : await createStudySession(file.name.replace(".pdf", ""), fileUrl);
+  const response = await fetch("/api/flashcards/pdf", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ fileUrl, sessionId: newSession.id }),
+  });
+  if (!response.ok) throw new Error("Failed to generate flashcards");
+  const flashcards = await response.json();
+  await updateSessionProgress(newSession.id, 0, flashcards.length);
+  return { flashcards, sessionId: newSession.id };
+}
+
+export async function generateFlashcardsFromChat(
+  topic,
+  accessToken,
+  sessionId = null
+) {
+  if (!accessToken) throw new Error("No access token provided");
+
+  const newSession = sessionId
+    ? { id: sessionId }
+    : await createStudySession(`Chat: ${topic.substring(0, 20)}`, null);
+
+  const response = await fetch("/api/flashcards/generate", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${accessToken}`,
+    },
+    body: JSON.stringify({ topic, sessionId: newSession.id }),
+  });
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(`API error: ${response.status} - ${errorText}`);
+  }
+  const flashcards = await response.json();
+  await updateSessionProgress(newSession.id, 0, flashcards.length);
+  return { flashcards, sessionId: newSession.id };
 }
