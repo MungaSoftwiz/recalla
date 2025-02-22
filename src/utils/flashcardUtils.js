@@ -71,7 +71,11 @@ export async function updateSessionProgress(sessionId, completed, total) {
   if (error) throw new Error(`Failed to update progress: ${error.message}`);
 }
 
-export async function uploadAndGenerateFlashcards(file, sessionId = null) {
+export async function uploadAndGenerateFlashcards(
+  file,
+  accessToken,
+  sessionId = null
+) {
   const {
     data: { session },
   } = await supabase.auth.getSession();
@@ -82,10 +86,16 @@ export async function uploadAndGenerateFlashcards(file, sessionId = null) {
     : await createStudySession(file.name.replace(".pdf", ""), fileUrl);
   const response = await fetch("/api/flashcards/pdf", {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${accessToken}`,
+    },
     body: JSON.stringify({ fileUrl, sessionId: newSession.id }),
   });
-  if (!response.ok) throw new Error("Failed to generate flashcards");
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(`API error: ${response.status} - ${errorText}`);
+  }
   const flashcards = await response.json();
   await updateSessionProgress(newSession.id, 0, flashcards.length);
   return { flashcards, sessionId: newSession.id };
