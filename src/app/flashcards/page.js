@@ -4,41 +4,12 @@ import { Box, Dialog, DialogContent } from "@mui/material";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
-import { SHARED_STYLES } from "@/styles/theme";
 import AppBar from "@/components/Layout/AppBar";
 import FlashcardSidebar from "@/components/SideBar/StudySessionList";
 import { FlashcardGenerator } from "@/components/Flashcard/FlashcardGenerator";
 import WelcomeScreen from "@/components/Welcome/WelcomeScreen";
 import FlashcardComponent from "@/components/Flashcard/FlashcardComponent";
-
-const mainContentStyles = {
-  root: {
-    display: "flex",
-    height: "100vh",
-    overflow: "hidden",
-  },
-  nav: {
-    width: (drawerOpen) => (drawerOpen ? 256 : 0),
-    flexShrink: 0,
-    transition: "width 0.3s",
-  },
-  navContent: {
-    marginTop: "64px",
-    height: "calc(100vh - 64px)",
-    overflow: "hidden",
-  },
-  main: {
-    flexGrow: 1,
-    height: "100vh",
-    overflow: "hidden",
-    marginTop: "64px",
-    bgcolor: SHARED_STYLES.colors.background,
-  },
-  mainContent: {
-    height: "100%",
-    overflow: "auto",
-  },
-};
+import { mainContentStyles } from "@/styles/theme";
 
 export default function FlashcardsLayout() {
   const [sessions, setSessions] = useState([]);
@@ -127,25 +98,21 @@ export default function FlashcardsLayout() {
         userName={userName}
       />
 
-      <Box component="nav" sx={mainContentStyles.nav}>
-        <Box sx={mainContentStyles.navContent}>
-          <FlashcardSidebar
-            sessions={sessions}
-            activeSessionId={activeSessionId}
-            onSessionSelect={async (session) => {
-              try {
-                const { data } = await supabase
-                  .from("flashcards")
-                  .select("*")
-                  .eq("session_id", session.id);
-                onGenerateFlashcards(data || [], session.id);
-              } catch (err) {
-                setError("Failed to load flashcards for this session");
-              }
-            }}
-          />
-        </Box>
-      </Box>
+      <FlashcardSidebar
+        sessions={sessions}
+        activeSessionId={activeSessionId}
+        onSessionSelect={async (session) => {
+          try {
+            const { data } = await supabase
+              .from("flashcards")
+              .select("*")
+              .eq("session_id", session.id);
+            onGenerateFlashcards(data || [], session.id);
+          } catch (err) {
+            setError("Failed to load flashcards for this session");
+          }
+        }}
+      />
 
       <Box component="main" sx={mainContentStyles.main}>
         <Box sx={mainContentStyles.mainContent}>
