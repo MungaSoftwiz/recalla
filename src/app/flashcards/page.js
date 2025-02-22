@@ -9,7 +9,7 @@ import AppBar from "@/components/Layout/AppBar";
 import FlashcardSidebar from "@/components/SideBar/StudySessionList";
 import { FlashcardGenerator } from "@/components/Flashcard/FlashcardGenerator";
 import WelcomeScreen from "@/components/Welcome/WelcomeScreen";
-import StudyView from "@/components/Flashcard/StudyView";
+import FlashcardComponent from "@/components/Flashcard/FlashcardComponent";
 
 const mainContentStyles = {
   root: {
@@ -158,20 +158,14 @@ export default function FlashcardsLayout() {
               sessions={sessions}
             />
           ) : (
-            <StudyView
-              flashcards={flashcards}
-              totalCards={totalCards}
-              completedCards={completedCards}
-              currentCardIndex={currentCardIndex}
+            <FlashcardComponent
+              card={flashcards[currentCardIndex]}
               isFlipped={isFlipped}
-              setIsFlipped={setIsFlipped}
-              setCompletedCards={setCompletedCards}
-              activeSessionId={activeSessionId}
-              isLoading={isLoading}
-              error={error}
-              showProgress={showProgress}
+              onFlip={() => setIsFlipped(!isFlipped)}
               onNext={() => setCurrentCardIndex((prev) => prev + 1)}
               onPrevious={() => setCurrentCardIndex((prev) => prev - 1)}
+              currentIndex={currentCardIndex}
+              totalCards={flashcards.length}
             />
           )}
         </Box>
