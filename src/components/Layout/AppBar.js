@@ -8,6 +8,7 @@ import { AppBar as MuiAppBar, Toolbar, IconButton } from "@mui/material";
 import { motion } from "framer-motion";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { supabase } from "@/lib/supabase";
 
 export default function AppBar({ onLogoClick, onSignOut }) {
   const [anchorEl, setAnchorEl] = useState(null);
