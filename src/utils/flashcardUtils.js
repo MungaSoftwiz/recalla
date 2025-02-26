@@ -2,14 +2,22 @@ import { supabase } from "@/lib/supabase";
 
 export async function uploadFile(file) {
   try {
+    console.log("File object:", file); // debug
+
     const {
       data: { user },
     } = await supabase.auth.getUser();
     if (!user) throw new Error("Not authenticated");
 
+    if (!file.name) {
+      throw new Error("File name is undefined")
+    }
+
     const fileExt = file.name.split(".").pop();
     const fileName = `${Math.random()}.${fileExt}`;
     const filePath = `${user.id}/${fileName}`;
+
+    console.log("File path:", filePath); // debug
 
     const { data, error } = await supabase.storage
       .from("pdfs")
@@ -71,35 +79,37 @@ export async function updateSessionProgress(sessionId, completed, total) {
   if (error) throw new Error(`Failed to update progress: ${error.message}`);
 }
 
-export async function uploadAndGenerateFlashcards(
-  file,
-  accessToken,
-  sessionId = null
-) {
-  const {
-    data: { session },
-  } = await supabase.auth.getSession();
-  if (!session) throw new Error("Not authenticated");
-  const fileUrl = await uploadFile(file);
-  const newSession = sessionId
-    ? { id: sessionId }
-    : await createStudySession(file.name.replace(".pdf", ""), fileUrl);
-  const response = await fetch("/api/flashcards/pdf", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${accessToken}`,
-    },
-    body: JSON.stringify({ fileUrl, sessionId: newSession.id }),
-  });
-  if (!response.ok) {
-    const errorText = await response.text();
-    throw new Error(`API error: ${response.status} - ${errorText}`);
-  }
-  const flashcards = await response.json();
-  await updateSessionProgress(newSession.id, 0, flashcards.length);
-  return { flashcards, sessionId: newSession.id };
-}
+// WIP: DO NOT DELETE
+
+// export async function uploadAndGenerateFlashcards(
+//   file,
+//   accessToken,
+//   sessionId = null
+// ) {
+//   const {
+//     data: { session },
+//   } = await supabase.auth.getSession();
+//   if (!session) throw new Error("Not authenticated");
+//   const fileUrl = await uploadFile(file);
+//   const newSession = sessionId
+//     ? { id: sessionId }
+//     : await createStudySession(file.name.replace(".pdf", ""), fileUrl);
+//   const response = await fetch("/api/flashcards/pdf", {
+//     method: "POST",
+//     headers: {
+//       "Content-Type": "application/json",
+//       Authorization: `Bearer ${accessToken}`,
+//     },
+//     body: JSON.stringify({ fileUrl, sessionId: newSession.id }),
+//   });
+//   if (!response.ok) {
+//     const errorText = await response.text();
+//     throw new Error(`API error: ${response.status} - ${errorText}`);
+//   }
+//   const flashcards = await response.json();
+//   await updateSessionProgress(newSession.id, 0, flashcards.length);
+//   return { flashcards, sessionId: newSession.id };
+// }
 
 export async function generateFlashcardsFromChat(
   topic,
