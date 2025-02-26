@@ -11,7 +11,7 @@ import {
 import { motion } from "framer-motion";
 import { Sparkles, Upload, Brain, BookOpen, Paperclip } from "lucide-react";
 import {
-  uploadAndGenerateFlashcards,
+  // uploadAndGenerateFlashcards,
   generateFlashcardsFromChat,
 } from "@/utils/flashcardUtils";
 import { useRouter } from "next/navigation";
@@ -28,36 +28,38 @@ export default function WelcomeScreen({
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
 
-  const handleFileUpload = async (event) => {
-    const file = event.target.files[0];
-    if (!file) return;
+  // WIP: DO NOT DELETE
 
-    setIsLoading(true);
-    try {
-      let {
-        data: { session },
-      } = await supabase.auth.getSession();
+  // const handleFileUpload = async (event) => {
+  //   const file = event.target.files[0];
+  //   if (!file) return;
 
-      if (!session || Date.now() / 1000 > session.expires_at) {
-        const { data: refreshData, error: refreshError } =
-          await supabase.auth.refreshSession();
-        if (refreshError) throw new Error("Authentication failed");
-        session = refreshData.session;
-      }
+  //   setIsLoading(true);
+  //   try {
+  //     let {
+  //       data: { session },
+  //     } = await supabase.auth.getSession();
 
-      const { flashcards, sessionId } = await uploadAndGenerateFlashcards(
-        file,
-        session.access_token
-      );
-      onGenerateFlashcards(flashcards, sessionId);
-      router.push(`/flashcards/study?sessionId=${sessionId}`);
-    } catch (err) {
-      console.error("PDF upload error:", err.message);
-      setError(err.message);
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  //     if (!session || Date.now() / 1000 > session.expires_at) {
+  //       const { data: refreshData, error: refreshError } =
+  //         await supabase.auth.refreshSession();
+  //       if (refreshError) throw new Error("Authentication failed");
+  //       session = refreshData.session;
+  //     }
+
+  //     const { flashcards, sessionId } = await uploadAndGenerateFlashcards(
+  //       file,
+  //       session.access_token
+  //     );
+  //     onGenerateFlashcards(flashcards, sessionId);
+  //     router.push(`/flashcards/study?sessionId=${sessionId}`);
+  //   } catch (err) {
+  //     console.error("PDF upload error:", err.message);
+  //     setError(err.message);
+  //   } finally {
+  //     setIsLoading(false);
+  //   }
+  // };
 
   const handleChatSubmit = async (e) => {
     e.preventDefault();
@@ -215,7 +217,7 @@ export default function WelcomeScreen({
           id="pdf-upload"
           type="file"
           accept=".pdf"
-          onChange={handleFileUpload}
+          // onChange={handleFileUpload}
           style={{ display: "none" }}
           disabled={isLoading}
         />
