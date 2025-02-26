@@ -99,9 +99,12 @@ export default function WelcomeScreen({
   };
 
   const handleViewProgress = () => {
-    router.push(
-      `/flashcards/progress?sessionId=${activeSessionId || sessions[0]?.id}`
-    );
+    const sessionId = activeSessionId || sessions[0]?.id;
+    if (sessionId) {
+      router.push(`/flashcards/study?sessionId=${sessionId}`);
+    } else {
+      console.error("No session ID available");
+    }
   };
 
   return (
