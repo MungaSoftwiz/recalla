@@ -6,7 +6,6 @@ import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import AppBar from "@/components/Layout/AppBar";
 import FlashcardSidebar from "@/components/SideBar/StudySessionList";
-import { FlashcardGenerator } from "@/components/Flashcard/FlashcardGenerator";
 import WelcomeScreen from "@/components/Welcome/WelcomeScreen";
 import FlashcardComponent from "@/components/Flashcard/FlashcardComponent";
 import { mainContentStyles } from "@/styles/theme";
@@ -86,7 +85,7 @@ export default function FlashcardsLayout() {
       ...prev.filter((s) => s.id !== sessionId),
     ]);
 
-    router.push(`/flashcards/study?sessionId=${sessionId}`);
+    // router.push(`/flashcards/study?sessionId=${sessionId}`);
   };
 
   return (
@@ -143,15 +142,6 @@ export default function FlashcardsLayout() {
           maxWidth="md"
           fullWidth
         >
-          <DialogContent>
-            <FlashcardGenerator
-              onFlashcardsGenerated={(newFlashcards) => {
-                const sessionId = sessions[0]?.id || crypto.randomUUID();
-                onGenerateFlashcards(newFlashcards, sessionId);
-              }}
-              onError={(errorMessage) => setError(errorMessage)}
-            />
-          </DialogContent>
         </Dialog>
       </Box>
     </Box>
