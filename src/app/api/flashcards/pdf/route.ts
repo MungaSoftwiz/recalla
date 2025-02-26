@@ -3,14 +3,13 @@ import pdf from "pdf-parse";
 import { PDFDocument, PDFName, PDFDict } from "pdf-lib";
 import { createWorker } from "tesseract.js";
 import OpenAI from "openai";
-import { createRouteHandlerClient } from "@supabase/auth-helpers-nextjs";
-import { cookies } from "next/headers";
+import { supabase } from "@/lib/supabase";
 import { z } from "zod";
 
 // Input validation
 const requestSchema = z.object({
   fileUrl: z.string().url(),
-  sessionId: z.string().uuid(),
+  // sessionId: z.string().uuid(),
 });
 
 const openai = new OpenAI({
@@ -97,12 +96,21 @@ interface Flashcard {
 
 export async function POST(request: Request) {
   try {
-    const supabase = createRouteHandlerClient({ cookies });
-    const {
-      data: { session },
-    } = await supabase.auth.getSession();
+    const authHeader = request.headers.get("Authorization");
+    if (!authHeader || !authHeader.startsWith("Bearer ")) {
+      return NextResponse.json(
+        { error: "Missing or invalid authorization header" },
+        { status: 401 }
+      );
+    }
 
-    if (!session) {
+    const token = authHeader.split(" ")[1];
+
+    const {
+      data: { user },
+      error,
+    } = await supabase.auth.getUser(token);
+    if (error || !user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
@@ -116,7 +124,7 @@ export async function POST(request: Request) {
       );
     }
 
-    const { fileUrl, sessionId } = validatedData.data;
+    const { fileUrl } = validatedData.data; // sessionId
 
     const response = await fetch(fileUrl);
     if (!response.ok) {
@@ -146,7 +154,8 @@ export async function POST(request: Request) {
           "back": "Answer with a bit explanation"
         }
       ]
-    }`;
+    }
+      Extracted Text: ${extractedText}`;
 
     const responseAI = await openai.chat.completions.create({
       model: "meta-llama/llama-3.3-70b-instruct:free",
@@ -168,9 +177,9 @@ export async function POST(request: Request) {
     };
 
     const { error: insertError } = await supabase.from("flashcards").insert(
-      flashcardsData.flashcards.map((card) => ({
-        user_id: session.user.id,
-        session_id: sessionId,
+      flashcardsData.flashcards.map((card: { front: string; back: string }) => ({
+        // user_id: session.user.id,
+        session_id: body.sessionId,
         front: card.front,
         back: card.back,
         completed: false,
