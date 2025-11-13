@@ -26,7 +26,7 @@ export function PricingTab(props: PricingTabProps) {
         <div className="mb-5">
           <div className="text-white/70 font-semibold mb-1">{props.planName}</div>
           <div className="inline-flex items-baseline mb-2">
-            <span className="text-white/70 font-bold text-3xl">ZAR</span>
+            <span className="text-white/70 font-bold text-3xl">KES</span>
             <span className="text-white/50 font-bold text-4xl">{props.yearly ? props.price.yearly : props.price.monthly}</span>
             <span className="text-white/70 font-medium">/mo</span>
           </div>
@@ -76,7 +76,7 @@ export default function PricingTable() {
         <PricingTab
           yearly={isAnnual}
           planName="Essential"
-          price={{ yearly: 29, monthly: 35 }}
+          price={{ yearly: 200, monthly: 250 }}
           planDescription="There are many variations available, but the majority have suffered."
           features={[
             'Unlimited placeholder texts',
@@ -90,7 +90,7 @@ export default function PricingTable() {
           yearly={isAnnual}
           popular={true}
           planName="Perform"
-          price={{ yearly: 49, monthly: 55 }}
+          price={{ yearly: 388, monthly: 420 }}
           planDescription="There are many variations available, but the majority have suffered."
           features={[
             'Unlimited placeholder texts',
@@ -104,7 +104,7 @@ export default function PricingTable() {
         <PricingTab
           yearly={isAnnual}
           planName="Enterprise"
-          price={{ yearly: 79, monthly: 85 }}
+          price={{ yearly: 580, monthly: 650 }}
           planDescription="There are many variations available, but the majority have suffered."
           features={[
             'Unlimited placeholder texts',

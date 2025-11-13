@@ -45,7 +45,7 @@ export const CallToAction = () => {
         <form className="mt-10 flex flex-col gap-2.5 max-w-sm mx-auto sm:flex-row">
           <input
             type="email"
-            placeholder="shongwe.bhekizwe@gmail.com"
+            placeholder="bmmunga@outlook.com"
             className="h-12 bg-white/20 rounded-lg px-5 font-medium placeholder:text-[#9CA3AF] sm:flex-1"
           />
           <button
